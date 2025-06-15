@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator HPP dengan Bahan Pokok</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        profit: '#10b981',
+                        loss: '#ef4444',
+                        primary: '#3b82f6'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .input-currency::-webkit-outer-spin-button,
+        .input-currency::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .input-currency {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div id="app" class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Kalkulator HPP dengan Bahan Pokok</h1>
+                <p class="text-gray-600">Hitung Harga Pokok Penjualan dan Laba penjualan</p>
+            </div>
+
+            <!-- Main Calculator -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+                <!-- Nama Project Section -->
+                <div class="p-6 md:p-8 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Informasi Project</h2>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Project</label>
+                            <input v-model="namaProject" type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 border" placeholder="Masukkan nama project">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bahan Pokok Section -->
+                <div class="p-6 md:p-8 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Bahan Pokok</h2>
+
+                    <!-- Bahan List -->
+                    <div v-for="(bahan, index) in daftarBahan" :key="index" class="mb-4 border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="font-medium text-gray-700">Bahan #{{ index + 1 }}</h3>
+                            <button @click="removeBahan(index)" class="text-red-600 hover:text-red-800">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Bahan</label>
+                                <input v-model="bahan.nama" type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 border" placeholder="Nama bahan">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah</label>
+                                <input v-model.number="bahan.jumlah" type="number" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 border" placeholder="0">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Harga per Unit</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">Rp</span>
+                                    <input v-model.number="bahan.harga" type="number" class="pl-8 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 border input-currency">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Biaya Tambahan per Bahan -->
+                        <div class="mt-3">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-sm font-medium text-gray-700">Biaya Tambahan</h4>
+                                <button @click="addBiaya(bahan)" class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                    <i class="fas fa-plus mr-1"></i> Tambah Biaya
+                                </button>
+                            </div>
+
+                            <div v-for="(biaya, biayaIndex) in bahan.biayaTambahan" :key="biayaIndex" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2 items-end">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Biaya</label>
+                                    <select v-model="biaya.jenis" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 border">
+                                        <option value="ongkir">Ongkos Kirim</option>
+                                        <option value="pajak">Pajak/Bea</option>
+                                        <option value="produksi">Biaya Produksi</option>
+                                        <option value="lainnya">Lainnya</option>
+                                    </select>
+                                </div>
+                                <div v-if="biaya.jenis === 'lainnya'">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Biaya</label>
+                                    <input v-model="biaya.nama" type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 border" placeholder="Nama biaya">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Total Biaya</label>
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">Rp</span>
+                                        <input v-model.number="biaya.nilai" type="number" class="pl-8 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 border input-currency">
+                                    </div>
+                                </div>
+                                <div>
+                                    <button @click="removeBiaya(bahan, biayaIndex)" class="w-full inline-flex justify-center items-center px-3 py-2 border border-transparent text-sm font-medium rounded shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                        <i class="fas fa-trash mr-1"></i> Hapus
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Summary per Bahan -->
+                        <div class="mt-3 bg-gray-50 p-3 rounded-md">
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                                <div>
+                                    <p class="text-gray-600">Subtotal Bahan</p>
+                                    <p class="font-medium">{{ formatCurrency(bahan.subtotal) }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-600">Total Biaya</p>
+                                    <p class="font-medium">{{ formatCurrency(bahan.totalBiaya) }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-600">Total per Bahan</p>
+                                    <p class="font-medium text-blue-600">{{ formatCurrency(bahan.total) }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Tambah Bahan di BAWAH daftar bahan -->
+                    <div class="mt-4 text-center">
+                        <button @click="addBahan" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="fas fa-plus mr-2"></i> Tambah Bahan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Harga Jual & Hasil Section -->
+                <div class="p-6 md:p-8">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Harga Jual & Laba</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Input Harga Jual -->
+                        <div class="bg-white p-4 rounded-lg shadow border border-gray-200">
+                            <h3 class="font-medium text-gray-700 border-b pb-2 mb-3">Input Harga Jual</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah Unit Produk Jadi</label>
+                                    <input v-model.number="jumlahUnit" type="number" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 border" placeholder="Jumlah unit yang dihasilkan">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Harga Jual per Unit</label>
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">Rp</span>
+                                        <input v-model.number="hargaJualPerUnit" type="number" class="pl-8 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 border input-currency">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Hasil Perhitungan -->
+                        <div class="bg-white p-4 rounded-lg shadow border border-gray-200">
+                            <h3 class="font-medium text-gray-700 border-b pb-2 mb-3">Hasil Perhitungan</h3>
+                            <div v-if="namaProject" class="mb-3 p-2 bg-blue-50 rounded-md">
+                                <p class="text-sm font-medium text-blue-800">Project: {{ namaProject }}</p>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Total Biaya Bahan Pokok</span>
+                                    <span class="text-sm font-medium">{{ formatCurrency(totalBiayaBahan) }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Total Biaya Tambahan</span>
+                                    <span class="text-sm font-medium">{{ formatCurrency(totalBiayaTambahan) }}</span>
+                                </div>
+                                <div class="flex justify-between pt-2 border-t">
+                                    <span class="text-sm font-medium">Total Biaya Produksi</span>
+                                    <span class="text-sm font-medium">{{ formatCurrency(totalBiayaProduksi) }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Jumlah Unit Produk</span>
+                                    <span class="text-sm font-medium">{{ jumlahUnit || 0 }}</span>
+                                </div>
+                                <div class="flex justify-between pt-2 border-t">
+                                    <span class="text-sm font-medium">HPP per Unit</span>
+                                    <span class="text-sm font-medium text-blue-600">{{ formatCurrency(hppPerUnit) }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Harga Jual per Unit</span>
+                                    <span class="text-sm font-medium">{{ formatCurrency(hargaJualPerUnit) }}</span>
+                                </div>
+                                <div class="flex justify-between pt-2 border-t">
+                                    <span class="font-medium">Laba per Unit</span>
+                                    <span :class="{'text-profit': labaPerUnit >= 0, 'text-loss': labaPerUnit < 0}" class="font-medium">
+                                        {{ formatCurrency(labaPerUnit) }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Total Penjualan</span>
+                                    <span class="text-sm font-medium">{{ formatCurrency(totalPenjualan) }}</span>
+                                </div>
+                                <div class="flex justify-between pt-2 border-t">
+                                    <span class="font-medium">Total Laba/Rugi</span>
+                                    <span :class="{'text-profit': totalLaba >= 0, 'text-loss': totalLaba < 0}" class="font-medium">
+                                        {{ formatCurrency(totalLaba) }}
+                                    </span>
+                                </div>
+                                <div v-if="hargaJualPerUnit > 0" class="flex justify-between pt-2 border-t">
+                                    <span class="text-sm font-medium">Margin Laba</span>
+                                    <span :class="{'text-profit': marginLaba >= 0, 'text-loss': marginLaba < 0}" class="text-sm font-medium">
+                                        {{ marginLaba }}%
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                namaProject: '',
+                daftarBahan: [],
+                jumlahUnit: 1,
+                hargaJualPerUnit: 0
+            },
+            computed: {
+                totalBiayaBahan() {
+                    return this.daftarBahan.reduce((total, bahan) => total + (bahan.subtotal || 0), 0);
+                },
+                totalBiayaTambahan() {
+                    return this.daftarBahan.reduce((total, bahan) => total + (bahan.totalBiaya || 0), 0);
+                },
+                totalBiayaProduksi() {
+                    return this.totalBiayaBahan + this.totalBiayaTambahan;
+                },
+                hppPerUnit() {
+                    if (this.jumlahUnit <= 0) return 0;
+                    return this.totalBiayaProduksi / this.jumlahUnit;
+                },
+                labaPerUnit() {
+                    return this.hargaJualPerUnit - this.hppPerUnit;
+                },
+                totalPenjualan() {
+                    return this.jumlahUnit * this.hargaJualPerUnit;
+                },
+                totalLaba() {
+                    return this.totalPenjualan - this.totalBiayaProduksi;
+                },
+                marginLaba() {
+                    if (this.hargaJualPerUnit <= 0) return 0;
+                    return ((this.labaPerUnit / this.hargaJualPerUnit) * 100).toFixed(2);
+                }
+            },
+            methods: {
+                addBahan() {
+                    this.daftarBahan.push({
+                        nama: '',
+                        jumlah: 1,
+                        harga: 0,
+                        biayaTambahan: [],
+                        get subtotal() {
+                            return this.jumlah * this.harga;
+                        },
+                        get totalBiaya() {
+                            return this.biayaTambahan.reduce((total, biaya) => total + (biaya.nilai || 0), 0);
+                        },
+                        get total() {
+                            return this.subtotal + this.totalBiaya;
+                        }
+                    });
+                },
+                removeBahan(index) {
+                    this.daftarBahan.splice(index, 1);
+                },
+                addBiaya(bahan) {
+                    bahan.biayaTambahan.push({
+                        jenis: 'ongkir',
+                        nama: '',
+                        nilai: 0
+                    });
+                },
+                removeBiaya(bahan, index) {
+                    bahan.biayaTambahan.splice(index, 1);
+                },
+                formatCurrency(value) {
+                    if (isNaN(value)) return 'Rp 0';
+                    return 'Rp ' + Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                }
+            },
+            created() {
+                // Add initial bahan
+                this.addBahan();
+            }
+        });
+    </script>
+</body>
+</html>
